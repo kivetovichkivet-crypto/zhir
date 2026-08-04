@@ -1,18 +1,17 @@
-from config import APP_NAME, VERSION
+import sys
 
-from engine.logger import setup_logger
-from engine.utils import create_folders
+from PyQt6.QtWidgets import QApplication
+
+from ui.main_window import MainWindow
 
 
 def main():
-    create_folders()
+    app = QApplication(sys.argv)
 
-    logger = setup_logger()
+    window = MainWindow()
+    window.show()
 
-    logger.info("Программа запущена")
-
-    print(f"{APP_NAME} v{VERSION}")
-    print("Все системы готовы")
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":
