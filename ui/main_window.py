@@ -14,7 +14,11 @@ from PyQt6.QtWidgets import (
     QListWidget,
 )
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QDateTime
+from PyQt6.QtGui import QPixmap
+
+from PIL import Image, ImageDraw
+import os
 
 
 class MainWindow(QMainWindow):
@@ -45,7 +49,6 @@ class MainWindow(QMainWindow):
         left.addWidget(title)
 
         prompt_box = QGroupBox("Prompt")
-
         prompt_layout = QVBoxLayout()
 
         self.prompt = QTextEdit()
@@ -54,14 +57,12 @@ class MainWindow(QMainWindow):
         )
 
         prompt_layout.addWidget(self.prompt)
-
         prompt_box.setLayout(prompt_layout)
 
         left.addWidget(prompt_box)
 
 
         negative_box = QGroupBox("Negative Prompt")
-
         negative_layout = QVBoxLayout()
 
         self.negative_prompt = QTextEdit()
@@ -83,7 +84,6 @@ class MainWindow(QMainWindow):
 
 
         settings = QGroupBox("Настройки")
-
         form = QFormLayout()
 
         self.width = QSpinBox()
@@ -103,30 +103,11 @@ class MainWindow(QMainWindow):
             "Random"
         )
 
-        form.addRow(
-            "Ширина:",
-            self.width
-        )
-
-        form.addRow(
-            "Высота:",
-            self.height
-        )
-
-        form.addRow(
-            "Steps:",
-            self.steps
-        )
-
-        form.addRow(
-            "CFG:",
-            self.cfg
-        )
-
-        form.addRow(
-            "Seed:",
-            self.seed
-        )
+        form.addRow("Ширина:", self.width)
+        form.addRow("Высота:", self.height)
+        form.addRow("Steps:", self.steps)
+        form.addRow("CFG:", self.cfg)
+        form.addRow("Seed:", self.seed)
 
         settings.setLayout(form)
 
@@ -139,6 +120,11 @@ class MainWindow(QMainWindow):
 
         self.generate.setMinimumHeight(
             45
+        )
+
+        # Кнопка теперь работает
+        self.generate.clicked.connect(
+            self.generate_image
         )
 
         left.addWidget(
@@ -217,6 +203,63 @@ class MainWindow(QMainWindow):
         root.addLayout(
             right,
             2
+        )
+
+
+    def generate_image(self):
+        prompt = self.prompt.toPlainText()
+
+        if not prompt:
+            self.statusBar().showMessage(
+                "Введите Prompt"
+            )
+            return
+
+        os.makedirs(
+            "outputs",
+            exist_ok=True
+        )
+
+        filename = "outputs/test_image.png"
+
+        image = Image.new(
+            "RGB",
+            (
+                self.width.value(),
+                self.height.value()
+            ),
+            (40, 40, 40)
+        )
+
+        draw = ImageDraw.Draw(image)
+
+        draw.text(
+            (30, 30),
+            "Zhir AI\n\n" + prompt[:100],
+            fill="white"
+        )
+
+        image.save(filename)
+
+
+        pixmap = QPixmap(filename)
+
+        self.preview.setPixmap(
+            pixmap.scaled(
+                500,
+                500,
+                Qt.AspectRatioMode.KeepAspectRatio
+            )
+        )
+
+
+        self.history.addItem(
+            f"{QDateTime.currentDateTime().toString()} - {prompt}"
+        )
+
+
+        self.statusBar().showMessage(
+            "Изображение создано"
         )
 
 
