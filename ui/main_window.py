@@ -17,7 +17,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QDateTime
 from PyQt6.QtGui import QPixmap
 
-from PIL import Image, ImageDraw
+from engine.generator import ImageGenerator
 import os
 
 
