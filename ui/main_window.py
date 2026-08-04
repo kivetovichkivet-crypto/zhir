@@ -28,8 +28,11 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Zhir AI")
         self.resize(1200, 750)
 
+        self.generator = ImageGenerator()
+
         self.setup_ui()
         self.apply_theme()
+
 
     def setup_ui(self):
         main = QWidget()
@@ -37,16 +40,20 @@ class MainWindow(QMainWindow):
 
         root = QHBoxLayout(main)
 
-        # Левая панель
+
         left = QVBoxLayout()
 
+
         title = QLabel("🎨 Zhir AI")
-        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title.setAlignment(
+            Qt.AlignmentFlag.AlignCenter
+        )
         title.setStyleSheet(
             "font-size: 28px; font-weight: bold;"
         )
 
         left.addWidget(title)
+
 
         prompt_box = QGroupBox("Prompt")
         prompt_layout = QVBoxLayout()
@@ -56,13 +63,23 @@ class MainWindow(QMainWindow):
             "Опишите изображение..."
         )
 
-        prompt_layout.addWidget(self.prompt)
-        prompt_box.setLayout(prompt_layout)
+        prompt_layout.addWidget(
+            self.prompt
+        )
 
-        left.addWidget(prompt_box)
+        prompt_box.setLayout(
+            prompt_layout
+        )
+
+        left.addWidget(
+            prompt_box
+        )
 
 
-        negative_box = QGroupBox("Negative Prompt")
+        negative_box = QGroupBox(
+            "Negative Prompt"
+        )
+
         negative_layout = QVBoxLayout()
 
         self.negative_prompt = QTextEdit()
@@ -83,35 +100,68 @@ class MainWindow(QMainWindow):
         )
 
 
-        settings = QGroupBox("Настройки")
+        settings = QGroupBox(
+            "Настройки"
+        )
+
         form = QFormLayout()
+
 
         self.width = QSpinBox()
         self.width.setValue(512)
 
+
         self.height = QSpinBox()
         self.height.setValue(512)
+
 
         self.steps = QSpinBox()
         self.steps.setValue(20)
 
+
         self.cfg = QDoubleSpinBox()
         self.cfg.setValue(7.5)
+
 
         self.seed = QLineEdit()
         self.seed.setPlaceholderText(
             "Random"
         )
 
-        form.addRow("Ширина:", self.width)
-        form.addRow("Высота:", self.height)
-        form.addRow("Steps:", self.steps)
-        form.addRow("CFG:", self.cfg)
-        form.addRow("Seed:", self.seed)
 
-        settings.setLayout(form)
+        form.addRow(
+            "Ширина:",
+            self.width
+        )
 
-        left.addWidget(settings)
+        form.addRow(
+            "Высота:",
+            self.height
+        )
+
+        form.addRow(
+            "Steps:",
+            self.steps
+        )
+
+        form.addRow(
+            "CFG:",
+            self.cfg
+        )
+
+        form.addRow(
+            "Seed:",
+            self.seed
+        )
+
+
+        settings.setLayout(
+            form
+        )
+
+        left.addWidget(
+            settings
+        )
 
 
         self.generate = QPushButton(
@@ -122,10 +172,11 @@ class MainWindow(QMainWindow):
             45
         )
 
-        # Кнопка теперь работает
+
         self.generate.clicked.connect(
             self.generate_image
         )
+
 
         left.addWidget(
             self.generate
@@ -135,8 +186,9 @@ class MainWindow(QMainWindow):
         left.addStretch()
 
 
-        # Правая часть
+
         right = QVBoxLayout()
+
 
         preview_title = QLabel(
             "Preview"
@@ -170,8 +222,8 @@ class MainWindow(QMainWindow):
 
         self.preview.setStyleSheet(
             """
-            border: 2px solid #555;
-            border-radius: 10px;
+            border:2px solid #555;
+            border-radius:10px;
             """
         )
 
@@ -187,6 +239,7 @@ class MainWindow(QMainWindow):
         right.addWidget(
             history_title
         )
+
 
         self.history = QListWidget()
 
@@ -206,8 +259,13 @@ class MainWindow(QMainWindow):
         )
 
 
+
     def generate_image(self):
+
         prompt = self.prompt.toPlainText()
+
+        negative = self.negative_prompt.toPlainText()
+
 
         if not prompt:
             self.statusBar().showMessage(
@@ -215,89 +273,119 @@ class MainWindow(QMainWindow):
             )
             return
 
-        os.makedirs(
-            "outputs",
-            exist_ok=True
-        )
 
-        filename = "outputs/test_image.png"
+        try:
 
-        image = Image.new(
-            "RGB",
-            (
-                self.width.value(),
-                self.height.value()
-            ),
-            (40, 40, 40)
-        )
-
-        draw = ImageDraw.Draw(image)
-
-        draw.text(
-            (30, 30),
-            "Zhir AI\n\n" + prompt[:100],
-            fill="white"
-        )
-
-        image.save(filename)
-
-
-        pixmap = QPixmap(filename)
-
-        self.preview.setPixmap(
-            pixmap.scaled(
-                500,
-                500,
-                Qt.AspectRatioMode.KeepAspectRatio
+            self.statusBar().showMessage(
+                "Генерация..."
             )
-        )
 
 
-        self.history.addItem(
-            f"{QDateTime.currentDateTime().toString()} - {prompt}"
-        )
+            image = self.generator.generate(
+                prompt=prompt,
+                negative_prompt=negative,
+                width=self.width.value(),
+                height=self.height.value(),
+                steps=self.steps.value(),
+                cfg=self.cfg.value()
+            )
 
 
-        self.statusBar().showMessage(
-            "Изображение создано"
-        )
+            os.makedirs(
+                "outputs",
+                exist_ok=True
+            )
+
+
+            filename = (
+                "outputs/generated.png"
+            )
+
+
+            image.save(
+                filename
+            )
+
+
+            pixmap = QPixmap(
+                filename
+            )
+
+
+            self.preview.setPixmap(
+                pixmap.scaled(
+                    500,
+                    500,
+                    Qt.AspectRatioMode.KeepAspectRatio
+                )
+            )
+
+
+            self.history.addItem(
+                f"{QDateTime.currentDateTime().toString()} - {prompt}"
+            )
+
+
+            self.statusBar().showMessage(
+                "Готово!"
+            )
+
+
+        except Exception as e:
+
+            print(e)
+
+            self.statusBar().showMessage(
+                f"Ошибка: {e}"
+            )
+
 
 
     def apply_theme(self):
+
         self.setStyleSheet(
             """
             QWidget {
-                background-color: #202124;
-                color: white;
-                font-size: 14px;
+                background-color:#202124;
+                color:white;
+                font-size:14px;
             }
+
 
             QTextEdit,
             QLineEdit,
             QSpinBox,
             QDoubleSpinBox {
-                background-color: #303134;
-                border: 1px solid #555;
-                padding: 5px;
-                color: white;
+
+                background-color:#303134;
+                border:1px solid #555;
+                padding:5px;
+                color:white;
             }
+
 
             QPushButton {
-                background-color: #3c78ff;
-                border-radius: 8px;
-                padding: 10px;
-                font-weight: bold;
+
+                background-color:#3c78ff;
+                border-radius:8px;
+                padding:10px;
+                font-weight:bold;
             }
+
 
             QPushButton:hover {
-                background-color: #5a8cff;
+
+                background-color:#5a8cff;
             }
 
+
             QGroupBox {
-                border: 1px solid #555;
-                border-radius: 8px;
-                margin-top: 10px;
-                padding: 10px;
+
+                border:1px solid #555;
+                border-radius:8px;
+                margin-top:10px;
+                padding:10px;
             }
+
             """
         )
